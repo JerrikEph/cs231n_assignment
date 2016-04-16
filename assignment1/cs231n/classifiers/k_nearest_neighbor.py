@@ -98,6 +98,7 @@ class KNearestNeighbor(object):
       #######################################################################
       #                         END OF YOUR CODE                            #
       #######################################################################
+    print dists.shape
     return dists
 
   def compute_distances_no_loops(self, X):
@@ -122,10 +123,28 @@ class KNearestNeighbor(object):
     # HINT: Try to formulate the l2 distance using matrix multiplication    #
     #       and two broadcast sums.                                         #
     #########################################################################
-    X_reshape = X.reshape(num_test, 1, X.shape[1])
-    X_train_reshape = self.X_train
-    X_train_reshape = X_train_reshape.reshape(1, X_train_reshape.shape[0], X_train_reshape.shape[1])
-    dists = np.sqrt(np.sum((X_reshape - X_train_reshape)**2, axis=1))
+    # X_reshape = X.reshape(num_test, 1, X.shape[1])
+    # print X_reshape.shape
+    # X_train_reshape = self.X_train
+    # X_train_reshape = X_train_reshape.reshape(1, X_train_reshape.shape[0], X_train_reshape.shape[1])
+    # print X_train_reshape.shape
+    # tmp1 = X_reshape - X_train_reshape
+    # print tmp1.shape
+    # tmp2 = tmp1**2
+    # print tmp2.shape
+    # tmp3 = np.sum(tmp2, axis=2)
+    # print tmp3.shape
+    # dists = np.sqrt(np.sum((X_reshape - X_train_reshape)**2, axis=2))
+    # print dists.shape
+
+    x_reshape = X.reshape(num_test, 1, X.shape[1])
+    x_reshape_train = self.X_train.reshape(1, self.X_train.shape[0], self.X_train.shape[1])
+
+    batch = num_test/100
+
+    for i in xrange(100):
+      dists[i*batch:i*batch+batch] = np.sqrt(np.sum((x_reshape[i*batch:i*batch+batch] - x_reshape_train)**2, axis=2))
+
     #########################################################################
     #                         END OF YOUR CODE                              #
     #########################################################################

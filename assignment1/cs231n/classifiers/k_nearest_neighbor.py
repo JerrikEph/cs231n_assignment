@@ -142,9 +142,9 @@ class KNearestNeighbor(object):
 
     batch = num_test/100
 
-    for i in xrange(100):
-      dists[i*batch:i*batch+batch] = np.sqrt(np.sum((x_reshape[i*batch:i*batch+batch] - x_reshape_train)**2, axis=2))
-
+    #for i in xrange(100):
+    #  dists[i*batch:i*batch+batch] = np.sqrt(np.sum((x_reshape[i*batch:i*batch+batch] - x_reshape_train)**2, axis=2))
+    dists = np.sqrt(np.sum((x_reshape - x_reshape_train) ** 2, axis=2))
     #########################################################################
     #                         END OF YOUR CODE                              #
     #########################################################################

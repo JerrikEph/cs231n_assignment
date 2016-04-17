@@ -168,6 +168,9 @@ y_train_folds = []
 # Hint: Look up the numpy array_split function.                                #
 ################################################################################
 X_train_folds = np.array_split(X_train, num_folds)
+X_train_folds = np.array(X_train_folds)
+y_train_folds = np.array_split(y_train, num_folds)
+y_train_folds = np.array(y_train_folds)
 ################################################################################
 #                                 END OF YOUR CODE                             #
 ################################################################################
@@ -192,20 +195,27 @@ for i in k_choices:
     k_to_accuracies[i]=range(num_folds)
 
 for i in range(num_folds):
-    cv_ytrain = X_train_folds[i]
-    tmp = range(5)
-    tmp[i]=0
+    cv_xtest = X_train_folds[i]
     cv_xtrain = X_train_folds[1:]
     cv_xtrain[i-1] = X_train_folds[0]
 
-    classifier = KNearestNeighbor(cv_xtrain, cv_ytrain)
+    cv_ytest = y_train_folds[i]
+    cv_ytrain = y_train_folds[1:]
+    cv_ytrain[i-1] = y_train_folds[0]
+
+    classifier = KNearestNeighbor()
+    classifier.train(cv_xtrain, cv_ytrain)
+
+    num_test = cv_xtest.shape[0]
     for j in k_choices:
+
+        dists = classifier.compute_distances_two_loops(cv_xtest)
         y_test_pred = classifier.predict_labels(dists, k=j)
 
         # Compute and print the fraction of correctly predicted examples
-        num_correct = np.sum(y_test_pred == y_test)
+        num_correct = np.sum(y_test_pred == cv_ytest)
         accuracy = float(num_correct) / num_test
-        k_to_accuracies[j][i]=accuracies
+        k_to_accuracies[j][i] = accuracy
 
 
 ################################################################################

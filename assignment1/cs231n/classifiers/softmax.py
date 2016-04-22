@@ -29,7 +29,26 @@ def softmax_loss_naive(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  train_nums = X.shape[0]
+  class_nums = W.shape[1]
+
+  for i in range(train_nums):
+    scores = np.dot(X[i], W)
+    sub_scores = scores - np.max(scores)
+    exp_scores = np.exp(sub_scores)
+
+    loss += np.log(np.sum(exp_scores)/exp_scores[y[i]])
+
+    d_scores = exp_scores/np.sum(exp_scores)
+    d_scores[y[i]] = exp_scores[y[i]]/np.sum(exp_scores) - 1  # C,
+    dW += np.dot(X[i].reshape(-1, 1), d_scores.reshape(1, -1))
+
+  loss /= train_nums
+  dW /= train_nums
+
+  loss += 0.5 * reg * np.sum(W * W)
+  dW += reg * W
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################
@@ -53,7 +72,20 @@ def softmax_loss_vectorized(W, X, y, reg):
   # here, it is easy to run into numeric instability. Don't forget the        #
   # regularization!                                                           #
   #############################################################################
-  pass
+  train_nums = X.shape[0]
+  class_nums = W.shape[1]
+
+  scores = np.dot(X, W)   ## N, C
+  sub_scores = scores - np.max(scores, 1).reshape(-1, 1)
+  exp_scores = np.exp(sub_scores)   ## N, C
+
+  loss = np.sum(np.log(np.sum(exp_scores, axis=1)) - np.log(exp_scores[np.arange(train_nums), y]))/train_nums + 0.5 * reg * np.sum(W * W) ##Compute loss
+
+  d_scrores = exp_scores/np.sum(exp_scores, axis=1).reshape(-1, 1)       ## N, C
+  d_scrores[np.arange(train_nums), y] = exp_scores[np.arange(train_nums), y]/np.sum(exp_scores, axis=1) -1
+  dW = np.sum(X.reshape(X.shape[0], X.shape[1], 1) * d_scrores.reshape(d_scrores.shape[0], 1, d_scrores.shape[1]),
+              axis=0)/train_nums + reg * W
+
   #############################################################################
   #                          END OF YOUR CODE                                 #
   #############################################################################

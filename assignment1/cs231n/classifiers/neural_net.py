@@ -74,7 +74,16 @@ class TwoLayerNet(object):
     # Store the result in the scores variable, which should be an array of      #
     # shape (N, C).                                                             #
     #############################################################################
-    pass
+    hidden_u = np.dot(X, W1) + b1.reshape(1, -1)         #(N, H)
+    hiddenL = (hidden_u > 0) * hidden_u
+    scores = np.dot(hiddenL, W2) + b2.reshape(1, -1)    #(H, C)
+    sub_scores = scores - np.max(scores, 1).reshape(-1, 1)    # (N, C)
+    exp_scores = np.exp(sub_scores)                           # (N, C)
+    exp_scores = exp_scores + ((exp_scores == 0) * 1e-30)
+
+
+    #print scores
+    #print "hello ", b1, b2
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -92,7 +101,11 @@ class TwoLayerNet(object):
     # classifier loss. So that your results match ours, multiply the            #
     # regularization loss by 0.5                                                #
     #############################################################################
-    pass
+
+    #print exp_scores
+    train_nums = X.shape[0]
+    loss = np.sum(np.log(np.sum(exp_scores, axis=1)) - np.log(exp_scores[np.arange(train_nums), y]))/train_nums + \
+           0.5 * reg * (np.sum(W1 * W1) + np.sum(W2 * W2) + np.sum(b1 * b1) + np.sum(b2 * b2)) ## loss + Regularization
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -104,7 +117,30 @@ class TwoLayerNet(object):
     # and biases. Store the results in the grads dictionary. For example,       #
     # grads['W1'] should store the gradient on W1, and be a matrix of same size #
     #############################################################################
-    pass
+    sigma_exp_sum = np.sum(exp_scores, axis=1)    # (N, )
+    dLdS = exp_scores/sigma_exp_sum.reshape(-1, 1)  ## (N, C)
+    dLdS[range(train_nums), y] -= 1
+
+    dSdW2 = hiddenL          ## (N, H)
+    dLdW2 = np.sum(dLdS.reshape(dLdS.shape[0], 1, dLdS.shape[1]) * dSdW2.reshape(dSdW2.shape[0], dSdW2.shape[1], 1), axis=0)/train_nums  ## (H, C)
+
+    dSdH = W2  ## (H, C)
+    dLdH = np.sum(dLdS.reshape(dLdS.shape[0], 1, dLdS.shape[1]) * dSdH.reshape(1, dSdH.shape[0], -1), axis=2)  ## (N, H)
+
+    dHdu = (hidden_u > 0) * np.ones_like(hidden_u) ## (N, H)
+    dLdu = dLdH * dHdu   ## (N, H)
+    dudW1 = X   ## (N, D)
+    #dHdW1 = dHdu.reshape(dHdu.shape[0], 1, -1) * dudW1.reshape(dudW1.shape[0], dudW1.shape[1], 1)  ## (N, D, H)
+    dLdW1 = np.sum(dLdu.reshape(dLdu.shape[0], 1, dLdu.shape[1]) * dudW1.reshape(dudW1.shape[0], dudW1.shape[1], 1), axis=0)/train_nums   ## (D, H)
+
+    # dSdb2 = 1
+    # dLdb2 = dLdS * dSdb2
+
+
+    grads['W2'] = dLdW2 + reg * W2
+    grads['W1'] = dLdW1 + reg * W1
+    grads['b2'] = np.sum(dLdS, axis=0)/train_nums + reg * b2
+    grads['b1'] = np.sum(dLdu, axis=0)/train_nums + reg * b1
     #############################################################################
     #                              END OF YOUR CODE                             #
     #############################################################################
@@ -148,7 +184,11 @@ class TwoLayerNet(object):
       # TODO: Create a random minibatch of training data and labels, storing  #
       # them in X_batch and y_batch respectively.                             #
       #########################################################################
-      pass
+      num_train = X.shape[0]
+
+      randomIdx = np.random.choice(range(num_train), batch_size)
+      X_batch = X[randomIdx]
+      y_batch = y[randomIdx]
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -163,7 +203,10 @@ class TwoLayerNet(object):
       # using stochastic gradient descent. You'll need to use the gradients   #
       # stored in the grads dictionary defined above.                         #
       #########################################################################
-      pass
+      self.params['W1'] -= learning_rate * grads['W1']
+      self.params['W2'] -= learning_rate * grads['W2']
+      self.params['b1'] -= learning_rate * grads['b1']
+      self.params['b2'] -= learning_rate * grads['b2']
       #########################################################################
       #                             END OF YOUR CODE                          #
       #########################################################################
@@ -208,7 +251,15 @@ class TwoLayerNet(object):
     ###########################################################################
     # TODO: Implement this function; it should be VERY simple!                #
     ###########################################################################
-    pass
+    W1, b1 = self.params['W1'], self.params['b1']
+    W2, b2 = self.params['W2'], self.params['b2']
+
+    train_num = X.shape[0]
+    hidden_u = np.dot(X, W1) + b1.reshape(1, -1)  # (N, H)
+    hiddenL = (hidden_u > 0) * hidden_u
+    scores = np.dot(hiddenL, W2) + b2.reshape(1, -1)  # (H, C)
+
+    y_pred = np.argmax(scores, 1)
     ###########################################################################
     #                              END OF YOUR CODE                           #
     ###########################################################################
